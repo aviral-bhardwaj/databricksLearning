@@ -29,7 +29,71 @@
 
 # COMMAND ----------
 
-# MAGIC %run ./Includes/Classroom-Setup-00.01
+#%run ./Includes/Classroom-Setup-00.01
+
+from pyspark.sql import SparkSession
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, DoubleType, DateType
+from datetime import date
+
+# Initialize Spark Session
+spark = SparkSession.builder.appName("DummyOrdersTable").getOrCreate()
+
+# Define schema
+schema = StructType([
+    StructField("order_id", IntegerType(), False),
+    StructField("customer_name", StringType(), True),
+    StructField("product", StringType(), True),
+    StructField("quantity", IntegerType(), True),
+    StructField("price", DoubleType(), True),
+    StructField("order_date", DateType(), True)
+])
+
+# Create sample data
+data = [
+    (1, "Alice", "Laptop", 1, 75000.00, date(2025, 12, 10)),
+    (2, "Bob", "Smartphone", 2, 30000.00, date(2025, 12, 11)),
+    (3, "Charlie", "Headphones", 3, 1500.00, date(2025, 12, 12)),
+       (4, "David", "Monitor", 1, 12000.00, date(2025, 12, 13)),
+    (5, "Eva", "Keyboard", 2, 2000.00, date(2025, 12, 14))
+]
+
+# Create DataFrame
+orders_df = spark.createDataFrame(data, schema)
+
+# Show DataFrame
+ 
+
+# COMMAND ----------
+
+#orders_df.display()
+#orders_df.show()
+display(orders_df)
+
+
+
+# COMMAND ----------
+
+orders_df.createOrReplaceTempView("orders")
+
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select * from orders
+
+# COMMAND ----------
+
+#Using SparkSQL
+spark.sql('select * from orders').show()
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select * from orders where price <= 1500
+
+# COMMAND ----------
+
+display(spark.table("orders"))
 
 # COMMAND ----------
 
