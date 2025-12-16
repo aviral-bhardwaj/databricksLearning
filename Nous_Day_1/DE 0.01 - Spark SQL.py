@@ -29,6 +29,21 @@
 
 # COMMAND ----------
 
+# MAGIC %sh
+# MAGIC pwd
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+#%run ./Includes/Classroom-Setup-00.01
+#%run /Workspace/Users/naveenktn@nousinfo.com/databricksLearning/Nous_Day_1/Includes/Classroom-Setup-00.01
+
+
+# COMMAND ----------
+
 # DBTITLE 0,--i18n-3ad6c2cb-bfa4-4af5-b637-ba001a9ef54b
 # MAGIC %md
 # MAGIC
@@ -78,8 +93,13 @@
 
 # COMMAND ----------
 
+
+from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, DoubleType, DateType
 from datetime import date
+
+# Initialize Spark Session
+spark = SparkSession.builder.appName("DummyOrdersTable").getOrCreate()
 
 # Define schema
 schema = StructType([
@@ -104,24 +124,73 @@ data = [
 orders_df = spark.createDataFrame(data, schema)
 
 # Show DataFrame
-
-
-# COMMAND ----------
-
-orders_df.display()
+ 
 
 # COMMAND ----------
 
-orders_df.show()
-
-# COMMAND ----------
-
+#orders_df.display()
 display(orders_df)
+
+
 
 # COMMAND ----------
 
 orders_df.createOrReplaceTempView("orders")
 
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC #Using SQL Command
+# MAGIC
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select * from orders
+
+# COMMAND ----------
+
+# MAGIC %md 
+# MAGIC #Using SparkSQl
+# MAGIC
+
+# COMMAND ----------
+
+spark.sql('select * from orders').show()
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC #Using SelectExpr
+# MAGIC
+
+# COMMAND ----------
+
+display(orders_df.selectExpr("*"))
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select * from orders where price <=1500
+
+# COMMAND ----------
+
+display(spark.table("orders").select ("customer_name","product","price"))
+
+
+# COMMAND ----------
+
+orders_df.printSchema()
+
+# COMMAND ----------
+
+# MAGIC
+# MAGIC %sql
+# MAGIC SELECT name, price
+# MAGIC FROM products
+# MAGIC WHERE price < 200
+# MAGIC ORDER BY price
 
 # COMMAND ----------
 
