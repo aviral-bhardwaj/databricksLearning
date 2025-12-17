@@ -23,7 +23,39 @@
 
 # COMMAND ----------
 
-# MAGIC %run ./Includes/Classroom-Setup-00.03
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, lit
+
+spark = SparkSession.builder.getOrCreate()
+
+data = [
+    (1, "Alice",   "IT",      80000, "IN", 5,  True),
+    (2, "Bob",     "IT",      75000, "US", 4,  True),
+    (3, "Charlie", "HR",      60000, "IN", 3,  False),
+    (4, "David",   "Finance", 90000, "UK", 7,  True),
+    (5, "Eve",     "HR",      65000, "IN", 4,  True),
+    (6, "Frank",   "IT",      70000, "DE", 2,  False),
+    (7, "Grace",   "Finance", 95000, "US", 8,  True),
+    (8, "Heidi",   "IT",      72000, "IN", 3,  True),
+    (9, "Ivan",    "Sales",   68000, "IN", 2,  False),
+    (10,"Judy",    "Sales",   73000, "US", 4,  True),
+    (11,"Ken",     "IT",      81000, "IN", 5,  True),
+    (12,"Leo",     "IT",      82000, "IN", 6,  None),
+    (13,"Mallory", "Finance", 99000, "US", 9,  True),
+    (14,"Niaj",    "Sales",   66000, "IN", 1,  False),
+    (15,"Olivia",  "HR",      64000, "CA", 3,  True),
+    (16,"Peggy",   "IT",      77000, "IN", 4,  True),
+    (17,"Quentin", "Finance", 93000, "IN", 6,  True),
+    (18,"Rupert",  "Sales",   71000, "UK", 3,  False),
+    (19,"Sybil",   "IT",      85000, "US", 7,  True),
+    (20,"Trent",   "HR",      60500, "IN", 2,  None),
+]
+
+schema = "emp_id INT, name STRING, dept STRING, salary INT, country STRING, experience INT, is_active BOOLEAN"
+
+emp_df = spark.createDataFrame(data, schema=schema)
+
+
 
 # COMMAND ----------
 
@@ -34,8 +66,7 @@
 
 # COMMAND ----------
 
-events_df = spark.table("events")
-display(events_df)
+emp_df.display()
 
 # COMMAND ----------
 
@@ -52,9 +83,9 @@ display(events_df)
 
 from pyspark.sql.functions import col
 
-print(events_df.device)
-print(events_df["device"])
-print(col("device"))
+print(emp_df.name)
+print(emp_df["name"])
+print(col("name"))
 
 # COMMAND ----------
 
@@ -64,8 +95,7 @@ print(col("device"))
 
 # COMMAND ----------
 
-# MAGIC %scala
-# MAGIC $"device"
+
 
 # COMMAND ----------
 
@@ -91,9 +121,9 @@ print(col("device"))
 
 # COMMAND ----------
 
-col("ecommerce.purchase_revenue_in_usd") + col("ecommerce.total_item_quantity")
-col("event_timestamp").desc()
-(col("ecommerce.purchase_revenue_in_usd") * 100).cast("int")
+col("salary") + col("experience")
+col("emp_id").desc()
+(col("salary") * 100).cast("int")
 
 # COMMAND ----------
 
@@ -103,12 +133,13 @@ col("event_timestamp").desc()
 
 # COMMAND ----------
 
-rev_df = (events_df
-         .filter(col("ecommerce.purchase_revenue_in_usd").isNotNull())
-         .withColumn("purchase_revenue", (col("ecommerce.purchase_revenue_in_usd") * 100).cast("int"))
-         .withColumn("avg_purchase_revenue", col("ecommerce.purchase_revenue_in_usd") / col("ecommerce.total_item_quantity"))
-         .sort(col("avg_purchase_revenue").desc())
-        )
+rev_df = (
+    emp_df
+    .filter(col("salary").isNotNull())
+    .withColumn("purchase_revenue", (col("salary") * 100).cast("int"))
+    .withColumn("avg_purchase_revenue", col("salary") / col("experience"))
+    .sort(col("avg_purchase_revenue").desc())
+)
 
 display(rev_df)
 
@@ -148,17 +179,17 @@ display(rev_df)
 
 # COMMAND ----------
 
-devices_df = events_df.select("user_id", "device")
-display(devices_df)
+two_df = emp_df.select("emp_id", "name")
+display(two_df)
 
 # COMMAND ----------
 
 from pyspark.sql.functions import col
 
-locations_df = events_df.select(
-    "user_id", 
-    col("geo.city").alias("city"), 
-    col("geo.state").alias("state")
+locations_df = emp_df.select(
+    "emp_id", 
+    col("country").alias("city"), 
+    col("dept").alias("state")
 )
 display(locations_df)
 
@@ -172,7 +203,7 @@ display(locations_df)
 
 # COMMAND ----------
 
-apple_df = events_df.selectExpr("user_id", "device in ('macOS', 'iOS') as apple_user")
+apple_df = emp_df.selectExpr("emp_id", "country in ('US', 'IN') as apple_user")
 display(apple_df)
 
 # COMMAND ----------
@@ -187,14 +218,13 @@ display(apple_df)
 
 # COMMAND ----------
 
-anonymous_df = events_df.drop("user_id", "geo", "device")
+anonymous_df = emp_df.drop("emp_id", "country", "dept")
 display(anonymous_df)
 
 # COMMAND ----------
 
-no_sales_df = events_df.drop(col("ecommerce"))
+no_sales_df = emp_df.drop("salary")
 display(no_sales_df)
-
 
 # COMMAND ----------
 
@@ -214,13 +244,13 @@ display(no_sales_df)
 
 # COMMAND ----------
 
-mobile_df = events_df.withColumn("mobile", col("device").isin("iOS", "Android"))
-display(mobile_df)
+mobile_emp_df = emp_df.withColumn("mobile", col("country").isin("US", "IN"))
+display(mobile_emp_df)
 
 # COMMAND ----------
 
-purchase_quantity_df = events_df.withColumn("purchase_quantity", col("ecommerce.total_item_quantity").cast("int"))
-purchase_quantity_df.printSchema()
+purchase_quantity_emp_df = emp_df.withColumn("purchase_quantity", col("salary").cast("int"))
+purchase_quantity_emp_df.printSchema()
 
 # COMMAND ----------
 
@@ -232,8 +262,8 @@ purchase_quantity_df.printSchema()
 
 # COMMAND ----------
 
-location_df = events_df.withColumnRenamed("geo", "location")
-display(location_df)
+location_emp_df = emp_df.withColumnRenamed("country", "location")
+display(location_emp_df)
 
 # COMMAND ----------
 
@@ -255,18 +285,18 @@ display(location_df)
 
 # COMMAND ----------
 
-purchases_df = events_df.filter("ecommerce.total_item_quantity > 0")
-display(purchases_df)
+purchases_emp_df = emp_df.filter("salary > 0")
+display(purchases_emp_df)
 
 # COMMAND ----------
 
-revenue_df = events_df.filter(col("ecommerce.purchase_revenue_in_usd").isNotNull())
-display(revenue_df)
+revenue_emp_df = emp_df.filter(col("salary").isNotNull())
+display(revenue_emp_df)
 
 # COMMAND ----------
 
-android_df = events_df.filter((col("traffic_source") != "direct") & (col("device") == "Android"))
-display(android_df)
+android_emp_df = emp_df.filter((col("country") != "US") & (col("dept") == "IT"))
+display(android_emp_df)
 
 # COMMAND ----------
 
@@ -280,12 +310,12 @@ display(android_df)
 
 # COMMAND ----------
 
-display(events_df.distinct())
+display(emp_df.distinct())
 
 # COMMAND ----------
 
-distinct_users_df = events_df.dropDuplicates(["user_id"])
-display(distinct_users_df)
+distinct_emp_df = emp_df.dropDuplicates(["is_active"])
+display(distinct_emp_df)
 
 # COMMAND ----------
 
@@ -297,7 +327,7 @@ display(distinct_users_df)
 
 # COMMAND ----------
 
-limit_df = events_df.limit(100)
+limit_df = emp_df.limit(4)
 display(limit_df)
 
 # COMMAND ----------
@@ -320,23 +350,23 @@ display(limit_df)
 
 # COMMAND ----------
 
-increase_timestamps_df = events_df.sort("event_timestamp")
-display(increase_timestamps_df)
+increase_salary_df = emp_df.sort("salary")
+display(increase_salary_df)
 
 # COMMAND ----------
 
-decrease_timestamp_df = events_df.sort(col("event_timestamp").desc())
-display(decrease_timestamp_df)
+decrease_salary_df = emp_df.sort(col("salary").desc())
+display(decrease_salary_df)
 
 # COMMAND ----------
 
-increase_sessions_df = events_df.orderBy(["user_first_touch_timestamp", "event_timestamp"])
-display(increase_sessions_df)
+increase_sessions_emp_df = emp_df.orderBy(["salary", "experience"])
+display(increase_sessions_emp_df)
 
 # COMMAND ----------
 
-decrease_sessions_df = events_df.sort(col("user_first_touch_timestamp").desc(), col("event_timestamp"))
-display(decrease_sessions_df)
+decrease_sessions_emp_df = emp_df.sort(col("salary").desc(), col("experience"))
+display(decrease_sessions_emp_df)
 
 # COMMAND ----------
 
@@ -344,10 +374,6 @@ display(decrease_sessions_df)
 # MAGIC %md
 # MAGIC
 # MAGIC Run the following cell to delete the tables and files associated with this lesson.
-
-# COMMAND ----------
-
-DA.cleanup()
 
 # COMMAND ----------
 
