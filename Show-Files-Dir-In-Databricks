@@ -1,0 +1,45 @@
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
+from databricks.sdk import WorkspaceClient
+import os
+import pandas as pd
+
+w = WorkspaceClient(
+    host='https://xxxxxxxxxxxxx.cloud.databricks.com',
+    token='xxxxxxxxxxxxxxxxxxxxxxxx'
+)
+
+# Collect results into a list
+items = []
+for item in w.workspace.list("/Workspace/Shared/"):
+    items.append({
+        "name": os.path.basename(item.path),
+        "full_path": item.path,
+        "type": item.object_type.name  # "DIRECTORY", "NOTEBOOK", "FILE"
+    })
+
+df = pd.DataFrame(items)
+
+
+
+
+def list_workspace_recursive(client, path, results=None):
+    if results is None:
+        results = []
+    
+    for item in client.workspace.list(path):
+        results.append({
+            "name": os.path.basename(item.path),
+            "full_path": item.path,
+            "type": item.object_type.name
+        })
+        # Recurse into directories
+        if item.object_type.name == "DIRECTORY":
+            list_workspace_recursive(client, item.path, results)
+    
+    return results
+
+all_items = list_workspace_recursive(w, "/Workspace/Shared/")
+df = pd.DataFrame(all_items)
+display(df)
